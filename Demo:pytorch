@@ -1,0 +1,55 @@
+Copy code
+from flask import Flask, render_template, request, redirect, url_for
+from flask_sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///food_reviews.db'
+db = SQLAlchemy(app)
+
+class Restaurant(db.Model):Title White 
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    address = db.Column(db.String(200), nullable=False)
+    rating = db.Column(db.Float, nullable=False)
+    reviews = db.relationship('Review', backref='restaurant', lazy=True)
+
+class Review(db.Model): Float ,
+    id = db.Column(db.Integer, primary_key=True)
+    restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurant.id'), nullable=False)
+    user_id = db.Column(db.Integer, nullable=False)
+    user_name = db.Column(db.String(100), nullable=False)
+    rating = db.Column(db.Integer, nullable=False)
+    review_text = db.Column(db.Text, nullable=False)
+
+@app.route('/')
+def index():
+    restaurants = Restaurant.query.order_by(Restaurant.rating.desc()).all()
+    return render_template('index.html', restaurants=restaurants)
+
+@app.route('/add_restaurant', methods=['GET', 'POST'])
+def add_restaurant():
+    if request.method == 'POST':
+        name = request.form['name']
+        address = request.form['address']
+        rating = request.form['rating']
+
+        new_restaurant = Restaurant(name=name, address=address, rating=rating)
+        db.session.add(new_restaurant)
+        db.session.commit()
+
+        return redirect(url_for('index'))
+    else:
+        return render_template('add_restaurant.html')
+
+@app.route('/restaurant/<int:restaurant_id>')
+def restaurant(restaurant_id):
+    restaurant = Restaurant.query.get_or_404(restaurant_id)
+    reviews = Review.query.filter_by(restaurant_id=restaurant_id).all()
+    return render_template('restaurant.html', restaurant=restaurant, reviews=reviews)
+
+@app.route('/add_review/<int:restaurant_id>', methods=['GET', 'POST'])
+def add_review(restaurant_id):
+    if request.method == 'POST':
+        user_id = request.form['user_id']
+        user_name = request.form['user_name']
+        rating = request.form['rating
